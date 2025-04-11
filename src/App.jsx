@@ -46,6 +46,8 @@ function AppContent() {
           return {
             id: doc.id,
             ...data,
+            // Set default archived status if it doesn't exist
+            archived: data.archived ?? false,
             // Format dates for display if needed
             formattedDateAdded: formatDateOnly(data.dateAdded),
             formattedExpiryDate: formatDateOnly(data.expiryDate),
@@ -58,7 +60,14 @@ function AppContent() {
   }
 
   // Initialize the TodoCrud component
-  const { renderAddTodoForm, renderTodoItem, toggleTodoCompletion } = TodoCrud({
+  const {
+    renderAddTodoForm,
+    renderTodoItem,
+    renderBulkActionControls,
+    filterTodos,
+    toggleTodoCompletion,
+    showArchived,
+  } = TodoCrud({
     user,
     todoListCollectionRef,
     getTodoList,
@@ -116,13 +125,22 @@ function AppContent() {
     return isMobile ? "bottom-center" : "top-right"
   }
 
+  // Filter todos based on archived status
+  const filteredTodos = filterTodos(getSortedTodos())
+
   // Render the todo content only when user is logged in
   const renderTodoContent = () => (
     <>
       {renderAddTodoForm()}
-      <h2>{t.noteList}</h2>
+      <h2>{showArchived ? t.archivedTasks : t.activeTasks}</h2>
+      {renderBulkActionControls(filteredTodos)}
       {renderSortingControls()}
-      <div className="todo-list">{getSortedTodos().map((todo) => renderTodoItem(todo))}</div>
+      <div className="todo-list">{filteredTodos.map((todo) => renderTodoItem(todo))}</div>
+      {filteredTodos.length === 0 && (
+        <div className="empty-state">
+          <p>{showArchived ? "No archived tasks found" : "No active tasks found"}</p>
+        </div>
+      )}
     </>
   )
 

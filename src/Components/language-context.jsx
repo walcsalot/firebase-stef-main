@@ -34,6 +34,19 @@ const translations = {
     delete: "Delete",
     save: "Save",
     cancel: "Cancel",
+    archive: "Archive",
+    unarchive: "Unarchive",
+    showArchived: "Show Archived",
+    hideArchived: "Hide Archived",
+    archivedTasks: "Archived Tasks",
+    activeTasks: "Active Tasks",
+
+    // Bulk actions
+    selectAll: "Select All",
+    selected: "selected",
+    markComplete: "Mark Complete",
+    markIncomplete: "Mark Incomplete",
+    bulkDelete: "Delete Selected",
 
     // Sort options
     sortBy: "Sort By",
@@ -88,7 +101,20 @@ const translations = {
     delete: "Burahin",
     save: "I-save",
     cancel: "Kanselahin",
+    archive: "I-arkibo",
+    unarchive: "Alisin sa Arkibo",
+    showArchived: "Ipakita ang Naka-arkibo",
+    hideArchived: "Itago ang Naka-arkibo",
+    archivedTasks: "Mga Naka-arkibong Gawain",
+    activeTasks: "Mga Aktibong Gawain",
 
+    // Bulk actions
+    selectAll: "Piliin Lahat",
+    selected: "napili",
+    markComplete: "Markahan Kumpleto",
+    markIncomplete: "Markahan Hindi Kumpleto",
+    bulkDelete: "Burahin ang Napili",
+    
     // Sort options
     sortBy: "Ayusin Ayon sa",
     newestFirst: "Pinakabago Muna",

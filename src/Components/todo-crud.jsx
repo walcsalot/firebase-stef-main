@@ -33,6 +33,10 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
   const [editPriority, setEditPriority] = useState("Low")
   const [editCategory, setEditCategory] = useState("Work")
 
+  // State for bulk actions
+  const [selectedTodos, setSelectedTodos] = useState([])
+  const [showArchived, setShowArchived] = useState(false)
+
   // Helper function to get translated priority
   const getTranslatedPriority = (priority) => {
     if (language === "english") return priority
@@ -69,6 +73,7 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
         name: newTodoName,
         description: newTodoDesc,
         completed: false,
+        archived: false,
         dateAdded: new Date().toISOString(),
         expiryDate: new Date(newTodoExpiry).toISOString(),
         priority: newTodoPriority,
@@ -105,6 +110,18 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
     } catch (err) {
       console.error("Error updating List: ", err)
       toast.error("Failed to update List.")
+    }
+  }
+
+  // Archive a todo
+  const archiveTodo = async (id, archived) => {
+    try {
+      await updateDoc(doc(db, "todos", id), { archived: !archived })
+      toast.success(archived ? "List unarchived!" : "List archived!")
+      getTodoList(user.uid)
+    } catch (err) {
+      console.error("Error archiving List: ", err)
+      toast.error("Failed to archive List.")
     }
   }
 
@@ -155,6 +172,101 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
     setEditingTodo(null)
   }
 
+  // Toggle selection of a todo for bulk actions
+  const toggleTodoSelection = (id) => {
+    setSelectedTodos((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((todoId) => todoId !== id)
+      } else {
+        return [...prev, id]
+      }
+    })
+  }
+
+  // Select all visible todos
+  const selectAllTodos = (todos) => {
+    if (selectedTodos.length === todos.length) {
+      // If all are selected, deselect all
+      setSelectedTodos([])
+    } else {
+      // Otherwise, select all
+      setSelectedTodos(todos.map((todo) => todo.id))
+    }
+  }
+
+  // Bulk mark todos as complete/incomplete
+  const bulkToggleCompletion = async (complete) => {
+    if (selectedTodos.length === 0) {
+      toast.info("No todos selected")
+      return
+    }
+
+    try {
+      const promises = selectedTodos.map((id) => updateDoc(doc(db, "todos", id), { completed: complete }))
+
+      await Promise.all(promises)
+
+      toast.success(
+        complete
+          ? `${selectedTodos.length} lists marked as complete!`
+          : `${selectedTodos.length} lists marked as incomplete!`,
+      )
+
+      setSelectedTodos([])
+      getTodoList(user.uid)
+    } catch (err) {
+      console.error("Error updating lists: ", err)
+      toast.error("Failed to update lists.")
+    }
+  }
+
+  // Bulk archive todos
+  const bulkArchiveTodos = async (archive) => {
+    if (selectedTodos.length === 0) {
+      toast.info("No todos selected")
+      return
+    }
+
+    try {
+      const promises = selectedTodos.map((id) => updateDoc(doc(db, "todos", id), { archived: archive }))
+
+      await Promise.all(promises)
+
+      toast.success(archive ? `${selectedTodos.length} lists archived!` : `${selectedTodos.length} lists unarchived!`)
+
+      setSelectedTodos([])
+      getTodoList(user.uid)
+    } catch (err) {
+      console.error("Error archiving lists: ", err)
+      toast.error("Failed to archive lists.")
+    }
+  }
+
+  // Bulk delete todos
+  const bulkDeleteTodos = async () => {
+    if (selectedTodos.length === 0) {
+      toast.info("No todos selected")
+      return
+    }
+
+    if (!confirm(`Are you sure you want to delete ${selectedTodos.length} lists?`)) {
+      return
+    }
+
+    try {
+      const promises = selectedTodos.map((id) => deleteDoc(doc(db, "todos", id)))
+
+      await Promise.all(promises)
+
+      toast.success(`${selectedTodos.length} lists deleted!`)
+      setSelectedTodos([])
+      getTodoList(user.uid)
+    } catch (err) {
+      console.error("Error deleting lists: ", err)
+      toast.error("Failed to delete lists.")
+    }
+  }
+
   // Render the add todo form
   const renderAddTodoForm = () => (
     <div className="todo-form">
@@ -185,6 +297,50 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
     </div>
   )
 
+  // Render bulk action controls
+  const renderBulkActionControls = (todos) => (
+    <div className="bulk-actions">
+      <div className="bulk-actions-left">
+        <button className="archive-toggle-btn" onClick={() => setShowArchived(!showArchived)}>
+          {showArchived ? t.hideArchived : t.showArchived}
+        </button>
+        <label className="select-all-label">
+          <input
+            type="checkbox"
+            checked={selectedTodos.length > 0 && selectedTodos.length === todos.length}
+            onChange={() => selectAllTodos(todos)}
+          />
+          {t.selectAll}
+        </label>
+      </div>
+
+      {selectedTodos.length > 0 && (
+        <div className="bulk-actions-right">
+          <span className="selected-count">
+            {selectedTodos.length} {t.selected}
+          </span>
+          <button className="bulk-action-btn complete-btn" onClick={() => bulkToggleCompletion(true)}>
+            {t.markComplete}
+          </button>
+          <button className="bulk-action-btn incomplete-btn" onClick={() => bulkToggleCompletion(false)}>
+            {t.markIncomplete}
+          </button>
+          <button className="bulk-action-btn archive-btn" onClick={() => bulkArchiveTodos(true)}>
+            {t.archive}
+          </button>
+          <button className="bulk-action-btn delete-btn" onClick={bulkDeleteTodos}>
+            {t.delete}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+
+  // Filter todos based on archived status
+  const filterTodos = (todos) => {
+    return todos.filter((todo) => (showArchived ? todo.archived : !todo.archived))
+  }
+
   // Render todo items with edit functionality
   const renderTodoItem = (todo) => {
     // Format dates for display
@@ -192,7 +348,11 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
     const expiryDate = formatDateOnly(todo.expiryDate)
 
     return (
-      <div key={todo.id} className={`todo-card ${todo.completed ? "completed" : ""}`} data-todo-id={todo.id}>
+      <div
+        key={todo.id}
+        className={`todo-card ${todo.completed ? "completed" : ""} ${todo.archived ? "archived" : ""}`}
+        data-todo-id={todo.id}
+      >
         {editingTodo === todo.id ? (
           <>
             <input value={editName} onChange={(e) => setEditName(e.target.value)} />
@@ -213,10 +373,23 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
           </>
         ) : (
           <>
-            <h2>
-              {todo.name}{" "}
-              <span className={`priority ${todo.priority.toLowerCase()}`}>{getTranslatedPriority(todo.priority)}</span>
-            </h2>
+            <div className="todo-card-header">
+              <label className="todo-checkbox-container">
+                <input
+                  type="checkbox"
+                  checked={selectedTodos.includes(todo.id)}
+                  onChange={() => toggleTodoSelection(todo.id)}
+                  className="todo-checkbox"
+                />
+                <span className="checkmark"></span>
+              </label>
+              <h2>
+                {todo.name}{" "}
+                <span className={`priority ${todo.priority.toLowerCase()}`}>
+                  {getTranslatedPriority(todo.priority)}
+                </span>
+              </h2>
+            </div>
             <p>{todo.description}</p>
             <p>
               <strong>{t.dateAdded}:</strong> {dateAdded}
@@ -227,15 +400,20 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
             <p>
               <strong>{t.category}:</strong> {getTranslatedCategory(todo.category)}
             </p>
-            <button onClick={() => toggleTodoCompletion(todo.id, todo.completed)}>
-              {todo.completed ? t.markAsIncomplete : t.markAsComplete}
-            </button>
-            <button className="edit-btn" onClick={() => startEditing(todo)}>
-              {t.edit}
-            </button>
-            <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
-              {t.delete}
-            </button>
+            <div className="todo-card-actions">
+              <button onClick={() => toggleTodoCompletion(todo.id, todo.completed)}>
+                {todo.completed ? t.markAsIncomplete : t.markAsComplete}
+              </button>
+              <button className="archive-btn" onClick={() => archiveTodo(todo.id, todo.archived)}>
+                {todo.archived ? t.unarchive : t.archive}
+              </button>
+              <button className="edit-btn" onClick={() => startEditing(todo)}>
+                {t.edit}
+              </button>
+              <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
+                {t.delete}
+              </button>
+            </div>
           </>
         )}
       </div>
@@ -245,12 +423,15 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
   return {
     renderAddTodoForm,
     renderTodoItem,
+    renderBulkActionControls,
+    filterTodos,
     editingTodo,
     toggleTodoCompletion,
     deleteTodo,
     startEditing,
     saveEdit,
     cancelEdit,
+    showArchived,
   }
 }
 
