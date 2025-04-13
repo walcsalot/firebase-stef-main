@@ -1,8 +1,12 @@
+"use client"
+
 import { useState } from "react"
 import { addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore"
 import { db } from "../config/firebase"
 import { toast } from "react-toastify"
 import { useLanguage } from "./language-context"
+import { DragDropManager } from "./drag-drop-manager"
+import { SocialShare } from "./social-share"
 
 // Helper function to format dates consistently
 const formatDateOnly = (dateString) => {
@@ -37,6 +41,23 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
   const [selectedTodos, setSelectedTodos] = useState([])
   const [showArchived, setShowArchived] = useState(false)
 
+  // State for layout customization
+  const [layoutSettings, setLayoutSettings] = useState({
+    viewType: "grid",
+    density: "comfortable",
+    visibleFields: {
+      description: true,
+      dateAdded: true,
+      expiryDate: true,
+      priority: true,
+      category: true,
+    },
+  })
+
+  // Initialize drag and drop manager
+  const { handleDragStart, handleDragOver, handleDragEnd, handleDrop, handleDragEnter, handleDragLeave, todoOrder } =
+    DragDropManager({ todoList: [], getTodoList, user })
+
   // Helper function to get translated priority
   const getTranslatedPriority = (priority) => {
     if (language === "english") return priority
@@ -63,6 +84,11 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
     return categoryMap[category] || category
   }
 
+  // Handle layout changes
+  const handleLayoutChange = (newSettings) => {
+    setLayoutSettings(newSettings)
+  }
+
   // Add a new todo
   const onSubmitTodo = async () => {
     if (!user) return alert("You must be logged in to add a todo.")
@@ -79,6 +105,7 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
         priority: newTodoPriority,
         category: newTodoCategory,
         userId: user.uid,
+        displayOrder: 9999, // Default to end of list
       })
 
       toast.success("List added successfully!")
@@ -341,6 +368,19 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
     return todos.filter((todo) => (showArchived ? todo.archived : !todo.archived))
   }
 
+  // Get CSS classes for todo card based on layout settings
+  const getTodoCardClasses = (todo) => {
+    let classes = `todo-card ${todo.completed ? "completed" : ""} ${todo.archived ? "archived" : ""}`
+
+    // Add density class
+    classes += ` density-${layoutSettings.density}`
+
+    // Add view type class
+    classes += ` view-${layoutSettings.viewType}`
+
+    return classes
+  }
+
   // Render todo items with edit functionality
   const renderTodoItem = (todo) => {
     // Format dates for display
@@ -350,8 +390,15 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
     return (
       <div
         key={todo.id}
-        className={`todo-card ${todo.completed ? "completed" : ""} ${todo.archived ? "archived" : ""}`}
+        className={getTodoCardClasses(todo)}
         data-todo-id={todo.id}
+        draggable={editingTodo !== todo.id}
+        onDragStart={(e) => handleDragStart(e, todo.id)}
+        onDragOver={(e) => handleDragOver(e, todo.id)}
+        onDragEnd={handleDragEnd}
+        onDrop={(e) => handleDrop(e, todo.id)}
+        onDragEnter={(e) => handleDragEnter(e, todo.id)}
+        onDragLeave={(e) => handleDragLeave(e, todo.id)}
       >
         {editingTodo === todo.id ? (
           <>
@@ -385,21 +432,36 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
               </label>
               <h2>
                 {todo.name}{" "}
-                <span className={`priority ${todo.priority.toLowerCase()}`}>
-                  {getTranslatedPriority(todo.priority)}
-                </span>
+                {layoutSettings.visibleFields.priority && (
+                  <span className={`priority ${todo.priority.toLowerCase()}`}>
+                    {getTranslatedPriority(todo.priority)}
+                  </span>
+                )}
               </h2>
             </div>
-            <p>{todo.description}</p>
-            <p>
-              <strong>{t.dateAdded}:</strong> {dateAdded}
-            </p>
-            <p>
-              <strong>{t.expiryDate}:</strong> {expiryDate}
-            </p>
-            <p>
-              <strong>{t.category}:</strong> {getTranslatedCategory(todo.category)}
-            </p>
+
+            {layoutSettings.visibleFields.description && <p>{todo.description}</p>}
+
+            <div className="todo-card-details">
+              {layoutSettings.visibleFields.dateAdded && (
+                <p>
+                  <strong>{t.dateAdded}:</strong> {dateAdded}
+                </p>
+              )}
+
+              {layoutSettings.visibleFields.expiryDate && (
+                <p>
+                  <strong>{t.expiryDate}:</strong> {expiryDate}
+                </p>
+              )}
+
+              {layoutSettings.visibleFields.category && (
+                <p>
+                  <strong>{t.category}:</strong> {getTranslatedCategory(todo.category)}
+                </p>
+              )}
+            </div>
+
             <div className="todo-card-actions">
               <button onClick={() => toggleTodoCompletion(todo.id, todo.completed)}>
                 {todo.completed ? t.markAsIncomplete : t.markAsComplete}
@@ -413,6 +475,29 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
               <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
                 {t.delete}
               </button>
+            </div>
+
+            <SocialShare todo={todo} />
+
+            <div className="drag-handle" title={t.dragToReorder}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="8" cy="6" r="1"></circle>
+                <circle cx="8" cy="12" r="1"></circle>
+                <circle cx="8" cy="18" r="1"></circle>
+                <circle cx="16" cy="6" r="1"></circle>
+                <circle cx="16" cy="12" r="1"></circle>
+                <circle cx="16" cy="18" r="1"></circle>
+              </svg>
             </div>
           </>
         )}
@@ -432,6 +517,8 @@ export const TodoCrud = ({ user, todoListCollectionRef, getTodoList, showNotific
     saveEdit,
     cancelEdit,
     showArchived,
+    handleLayoutChange,
+    layoutSettings,
   }
 }
 

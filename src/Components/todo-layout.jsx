@@ -11,7 +11,7 @@ export const TodoLayout = ({ user, children }) => {
       <div className="login-page">
         <div className="login-logo">
           <h1>{t.appTitle}</h1>
-          <p>Organize your tasks efficiently</p>
+          <p>Organize your Notes efficiently</p>
         </div>
         <Auth isLoggedIn={false} />
         <Footer />

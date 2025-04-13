@@ -1,10 +1,12 @@
+"use client"
+
 import { createContext, useState, useEffect, useContext } from "react"
 
 // Create translations for English and Filipino
 const translations = {
   english: {
     // App header
-    appTitle: "Note List App",
+    appTitle: "Todo List App",
     logout: "Logout",
 
     // Todo form
@@ -48,12 +50,27 @@ const translations = {
     markIncomplete: "Mark Incomplete",
     bulkDelete: "Delete Selected",
 
+    // Statistics
+    statistics: "Note Completion Statistics",
+    totalTasks: "Total Tasks",
+    completedTasks: "Completed",
+    activeTasks: "Active",
+    archivedTasks: "Archived",
+    completionRate: "Completion Rate",
+    tasksByPriority: "Tasks by Priority",
+    tasksByCategory: "Tasks by Category",
+    recentActivity: "Recent Activity",
+    tasksLast7Days: "Created in last 7 days",
+    completedLast7Days: "Completed in last 7 days",
+    overdueTasks: "Overdue tasks",
+
     // Sort options
     sortBy: "Sort By",
     newestFirst: "Newest First",
 
     // Auth
     welcomeBack: "Welcome Back",
+    loginAccess: "Login to access your todo lists",
     email: "Email",
     password: "Password",
     login: "Login",
@@ -61,6 +78,7 @@ const translations = {
     or: "OR",
     continueWithGoogle: "Continue with Google",
     createAccount: "Create Account",
+    signupStart: "Sign up to start managing your todos",
     confirmPassword: "Confirm Password",
     passwordHint: "Must be at least 6 characters",
     creatingAccount: "Creating Account...",
@@ -68,10 +86,40 @@ const translations = {
     // Theme
     darkMode: "Dark Mode",
     lightMode: "Light Mode",
+
+    // Layout customizer
+    customizeLayout: "Customize Layout",
+    openCustomizer: "Open Layout Customizer",
+    closeCustomizer: "Close Layout Customizer",
+    viewType: "View Type",
+    gridView: "Grid View",
+    listView: "List View",
+    density: "Density",
+    compact: "Compact",
+    comfortable: "Comfortable",
+    spacious: "Spacious",
+    visibleFields: "Visible Fields",
+    description: "Description",
+
+    // Social Share
+    shareToSocial: "Share to Social Media",
+    share: "Share",
+    copyToClipboard: "Copy to Clipboard",
+    copied: "Copied!",
+    checkOutMyTask: "Check out my task",
+    todoFromApp: "Todo from MyTodoApp",
+    status: "Status",
+    active: "Active",
+    completed: "Completed",
+
+    // Drag and drop
+    dragToReorder: "Drag to reorder",
+    todoReordered: "Tasks reordered successfully",
+    errorReordering: "Error reordering tasks",
   },
   filipino: {
     // App header
-    appTitle: "Note List App",
+    appTitle: "Todo List App",
     logout: "Mag-logout",
 
     // Todo form
@@ -114,13 +162,28 @@ const translations = {
     markComplete: "Markahan Kumpleto",
     markIncomplete: "Markahan Hindi Kumpleto",
     bulkDelete: "Burahin ang Napili",
-    
+
+    // Statistics
+    statistics: "Istatistika ng Pagkumpleto ng Tala",
+    totalTasks: "Kabuuang Gawain",
+    completedTasks: "Nakumpleto",
+    activeTasks: "Aktibo",
+    archivedTasks: "Naka-arkibo",
+    completionRate: "Rate ng Pagkumpleto",
+    tasksByPriority: "Mga Gawain ayon sa Prioridad",
+    tasksByCategory: "Mga Gawain ayon sa Kategorya",
+    recentActivity: "Kamakailang Aktibidad",
+    tasksLast7Days: "Nagawa sa huling 7 araw",
+    completedLast7Days: "Nakumpleto sa huling 7 araw",
+    overdueTasks: "Mga nahuling gawain",
+
     // Sort options
     sortBy: "Ayusin Ayon sa",
     newestFirst: "Pinakabago Muna",
 
     // Auth
     welcomeBack: "Maligayang Pagbabalik",
+    loginAccess: "Mag-login para ma-access ang iyong mga todo list",
     email: "Email",
     password: "Password",
     login: "Mag-login",
@@ -128,6 +191,7 @@ const translations = {
     or: "O",
     continueWithGoogle: "Magpatuloy gamit ang Google",
     createAccount: "Gumawa ng Account",
+    signupStart: "Mag-sign up para simulan ang pamamahala ng iyong mga todo",
     confirmPassword: "Kumpirmahin ang Password",
     passwordHint: "Dapat ay hindi bababa sa 6 na karakter",
     creatingAccount: "Gumagawa ng Account...",
@@ -135,6 +199,36 @@ const translations = {
     // Theme
     darkMode: "Madilim na Mode",
     lightMode: "Maliwanag na Mode",
+
+    // Layout customizer
+    customizeLayout: "I-customize ang Layout",
+    openCustomizer: "Buksan ang Layout Customizer",
+    closeCustomizer: "Isara ang Layout Customizer",
+    viewType: "Uri ng View",
+    gridView: "Grid View",
+    listView: "List View",
+    density: "Density",
+    compact: "Compact",
+    comfortable: "Comfortable",
+    spacious: "Spacious",
+    visibleFields: "Mga Nakikitang Field",
+    description: "Paglalarawan",
+
+    // Social Share
+    shareToSocial: "Ibahagi sa Social Media",
+    share: "Ibahagi",
+    copyToClipboard: "Kopyahin",
+    copied: "Nakopya!",
+    checkOutMyTask: "Tingnan ang aking gawain",
+    todoFromApp: "Todo mula sa MyTodoApp",
+    status: "Katayuan",
+    active: "Aktibo",
+    completed: "Nakumpleto",
+
+    // Drag and drop
+    dragToReorder: "I-drag para muling ayusin",
+    todoReordered: "Matagumpay na muling inayos ang mga gawain",
+    errorReordering: "Error sa pag-aayos ng mga gawain",
   },
 }
 
