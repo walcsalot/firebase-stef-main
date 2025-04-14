@@ -10,13 +10,13 @@ export const SocialShare = ({ todo }) => {
 
   // Format the todo content for sharing
   const getShareContent = () => {
-    const title = `${t.checkOutMyTask}: ${todo.name}`
+    const title = `${t.checkOutMyNote} \nTitle: ${todo.name}`
     const description = todo.description
     const priority = `${t.priority}: ${todo.priority}`
     const category = `${t.category}: ${todo.category}`
     const status = todo.completed ? t.completed : t.active
 
-    return `${title}\n${description}\n${priority}\n${category}\n${t.status}: ${status}`
+    return `${title}\nDescription: ${description}\n${priority}\n${category}\n${t.status}: ${status}`
   }
 
   // Share using the Web Share API if available
